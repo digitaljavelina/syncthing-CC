@@ -2,28 +2,7 @@
 
 Sync Claude Code configuration (settings, CLAUDE.md, commands, hooks, MCP servers) across multiple Macs in real-time using Syncthing + symlinks.
 
-## Architecture
-
-```
-Mac A                              Mac B
-~/.claude/                         ~/.claude/
-  settings.json    → symlink         settings.json    → symlink
-  CLAUDE.md        → symlink         CLAUDE.md        → symlink
-  commands/        → symlink         commands/        → symlink
-  hooks/           → symlink         hooks/           → symlink
-  skills/          → symlink         skills/          → symlink
-  agents/          → symlink         agents/          → symlink
-  get-shit-done/   → symlink         get-shit-done/   → symlink
-  .credentials.json  (local)         .credentials.json  (local)
-  settings.local.json (local)        settings.local.json (local)
-  projects/          (local)         projects/          (local)
-~/.claude.json       (local)       ~/.claude.json       (local)
-        ↓                                  ↓
-~/Sync/claude-code-config/         ~/Sync/claude-code-config/
-        ↕ ── Syncthing (real-time, P2P, over Tailscale) ── ↕
-```
-
-### What syncs
+## What syncs
 
 | File | Syncs? | Why |
 |------|--------|-----|
@@ -40,7 +19,7 @@ Mac A                              Mac B
 | `projects/` | No | Session history — huge, machine-specific |
 | `statsig/` | No | Analytics cache |
 
-### Why Syncthing over alternatives
+## Why Syncthing over alternatives
 
 | Option | Problem |
 |--------|---------|
