@@ -10,9 +10,9 @@ Sync Claude Code configuration (settings, CLAUDE.md, commands, hooks, MCP server
 | `CLAUDE.md` | Yes | Global instructions |
 | `commands/` | Yes | Custom slash commands |
 | `hooks/` | Yes | Hook scripts |
-| `skills/` | Yes | Custom skills (tutorial, yt-tutorial, etc.) |
-| `agents/` | Yes | GSD agent definitions |
-| `get-shit-done/` | Yes | GSD templates, workflows, references |
+| `skills/` | Yes | Custom skills |
+| `agents/` | Yes | Agent definitions |
+| Any custom dirs | Yes | Add to `bootstrap.sh` as needed |
 | `.claude.json` | **No** | MCP servers + OAuth + runtime state — use `install-mcp.sh` per machine |
 | `.credentials.json` | No | Auth tokens — machine-specific |
 | `settings.local.json` | No | Intentionally local overrides |
@@ -52,13 +52,17 @@ This migrates your existing `~/.claude` config into `~/Sync/claude-code-config` 
 
 ### 3. Pair the Macs via Syncthing
 
-1. Open http://localhost:8384 on both Macs
+1. Open http://localhost:8384 on both Macs (hard refresh if the UI seems unresponsive)
 2. On Mac A: Actions → Show ID → copy the Device ID
 3. On Mac B: Add Remote Device → paste Mac A's Device ID
 4. Repeat in reverse (Mac B ID → Mac A)
-5. On Mac A: Add Folder → path `~/Sync/claude-code-config` → share with Mac B
-6. On Mac B: Accept the incoming folder share
-7. Wait for the folder to finish syncing (Syncthing UI shows "Up to Date")
+5. Wait for both devices to show **"Connected"** (green) under Remote Devices before sharing folders
+6. On Mac A: Add Folder → path `~/Sync/claude-code-config` → share with Mac B
+7. On Mac B: Accept the incoming folder share — **check these critical settings:**
+   - **Folder Path**: `~/Sync/claude-code-config`
+   - **Folder Type** (Advanced tab): Must be **"Send & Receive"** — NOT "Receive Encrypted" (the default in some cases). "Receive Encrypted" will sync garbled `.syncthing-enc` files instead of your actual config.
+   - **Encryption password**: Must be **empty** on both sides. If Mac A has an encryption password set for Mac B under the folder's Sharing tab, clear it.
+8. Wait for the folder to finish syncing (Syncthing UI shows "Up to Date" on both Macs)
 
 **Tailscale optimization**: Set the remote device address to its Tailscale IP:
 ```
@@ -68,14 +72,14 @@ This bypasses relay servers and gives you LAN-speed sync.
 
 ### 4. Run bootstrap on secondary Mac(s)
 
-Once `~/Sync/claude-code-config` has finished syncing from Mac A:
+**Wait until sync is fully complete** (both Macs show "Up to Date") before running this:
 
 ```bash
 chmod +x bootstrap.sh
 ./bootstrap.sh
 ```
 
-The script detects that `~/Sync/claude-code-config` already has files (from Syncthing) and creates symlinks to them instead of migrating.
+The script detects that `~/Sync/claude-code-config` already has files (from Syncthing) and creates symlinks to them instead of migrating. If you ran it too early, just re-run it after sync completes — it's idempotent.
 
 ## MCP Server Setup (Per Machine)
 
@@ -133,6 +137,8 @@ brew services start syncthing
 # 2. Open http://localhost:8384 and pair with existing devices
 #    - Exchange Device IDs with an existing Mac
 #    - Accept the claude-code-config folder share
+#    - IMPORTANT: Set Folder Type to "Send & Receive" (not "Receive Encrypted")
+#    - IMPORTANT: Leave the encryption password empty
 #    - Wait for sync to complete (UI shows "Up to Date")
 
 # 3. Run bootstrap (creates symlinks to the synced config)
@@ -143,6 +149,18 @@ brew services start syncthing
 ```
 
 ## Troubleshooting
+
+**Syncthing UI unresponsive or buttons not working**: Hard refresh with `Cmd+Shift+R` or try a different browser. The single-page app can get stuck.
+
+**"Receive Encrypted" / `.syncthing-enc` files**: You accepted the folder with the wrong type. Remove the folder in Syncthing (this doesn't delete files on disk), delete any `.syncthing-enc` directories from `~/Sync/claude-code-config/`, then re-accept the folder share with Folder Type set to "Send & Receive" and no encryption password.
+
+**"Remote expects to exchange encrypted data"**: Mac A has an encryption password set for the remote device on this folder. On Mac A: click the folder → Edit → Sharing tab → find the remote device → clear the encryption password field → Save. Then restart Syncthing on both Macs: `brew services restart syncthing`.
+
+**Devices stuck on "Disconnected"**: Restart Syncthing on both Macs: `brew services restart syncthing`. Give it 30 seconds to reconnect.
+
+**Duplicate folders syncing the same path**: If you see two folder IDs both pointing to `~/Sync/claude-code-config`, remove the extra one. Only one folder ID should manage each path.
+
+**macOS permissions blocking sync**: Grant Syncthing Full Disk Access in System Settings → Privacy & Security → Full Disk Access. The binary is usually at `/opt/homebrew/bin/syncthing`. Restart after: `brew services restart syncthing`.
 
 **Syncthing conflict files**: Look for `*.sync-conflict-*` in `~/Sync/claude-code-config/`. Merge manually and delete the conflict file.
 
