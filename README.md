@@ -111,21 +111,19 @@ Use `~/.claude/settings.local.json` for machine-specific settings. This file is 
 
 ## Syncing Memories Across Machines
 
-The `projects/` directory is excluded from sync because it contains large session history and conversation logs. However, Claude Code's **memory files** (stored in `~/.claude/projects/<project-path>/memory/`) are small, stable, and valuable across machines. If you only use one Mac at a time, these sync cleanly without conflicts.
+This is **already configured** by `bootstrap.sh` — no extra setup needed.
 
-To sync memories while excluding bulky session data, add a Syncthing `.stignore` pattern:
+The `projects/` directory contains large session history and conversation logs that are machine-specific. However, Claude Code's **memory files** (stored in `~/.claude/projects/<project-path>/memory/`) are small, stable, and valuable across machines. The bootstrap script creates a `.stignore` file at `~/Sync/claude-code-config/.stignore` that automatically excludes bulky session data while syncing memories:
 
 ```
-// In the claude-code-config shared folder's .stignore
-// Ignore everything in projects/ except memory folders
-projects/**
-!projects/**/memory/
-!projects/**/memory/**
+projects/**              ← ignore all session history
+!projects/**/memory/     ← except memory folders
+!projects/**/memory/**   ← and their contents
 ```
 
-Alternatively, add the specific `memory/` paths to `bootstrap.sh` as additional symlink targets.
+Session history is not useful to sync — you cannot resume a session started on a different Mac. Memories, on the other hand, persist context (user preferences, project notes, feedback) that Claude Code reads at the start of every conversation.
 
-Note: session history itself is not useful to sync — you cannot resume a session started on a different Mac. Memories, on the other hand, persist context (user preferences, project notes, feedback) that Claude Code reads at the start of every conversation.
+If you need to edit ignore patterns later, either edit `~/Sync/claude-code-config/.stignore` directly or use the Syncthing web UI: click the folder → Edit → Ignore Patterns tab.
 
 ## Adding a new Mac
 
