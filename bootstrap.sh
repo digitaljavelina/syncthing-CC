@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # bootstrap.sh — Set up real-time Claude Code config sync across Macs
-# Uses: Syncthing (real-time P2P sync) + GNU Stow (symlink management)
+# Uses: Syncthing (real-time P2P sync) + symlinks
 #
-# Run this on EACH Mac. First run on primary Mac, then on secondary Mac(s).
-# Syncthing pairing must be done manually via web UI (http://localhost:8384).
+# WORKFLOW:
+#   Mac A (primary):  Install Syncthing → run bootstrap.sh → pair via Syncthing UI
+#   Mac B (secondary): Install Syncthing → pair via Syncthing UI → wait for sync → run bootstrap.sh
+#
+# Syncthing must be installed and running BEFORE pairing. The web UI at
+# http://localhost:8384 is where you exchange Device IDs and share folders.
+# You do NOT need to run bootstrap.sh before accessing the Syncthing UI.
 #
 # Prerequisites: Homebrew installed, Tailscale connected on all machines.
 
@@ -212,11 +217,15 @@ echo "    ~/.claude/statsig/"
 echo "    ~/.claude/projects/"
 echo ""
 echo "  NEXT STEPS:"
-echo "    1. Open http://localhost:8384"
-echo "    2. Add your other Mac as a Remote Device (exchange Device IDs)"
-echo "    3. Share the folder: $SYNC_DIR"
-echo "    4. Run this same script on your other Mac"
-echo "    5. Accept the folder share on the other Mac's Syncthing UI"
+echo "    If this is your PRIMARY Mac:"
+echo "      1. Open http://localhost:8384"
+echo "      2. Add your other Mac as a Remote Device (exchange Device IDs)"
+echo "      3. Share the folder: $SYNC_DIR"
+echo "      4. On the other Mac: accept the folder share, wait for sync"
+echo "      5. On the other Mac: run this same script"
+echo ""
+echo "    If this is a SECONDARY Mac:"
+echo "      You're done! Config is linked and syncing."
 echo ""
 echo "  TIP: Syncthing works over Tailscale. Set the remote device"
 echo "       address to the Tailscale IP (e.g., tcp://100.x.y.z:22000)"

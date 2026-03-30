@@ -30,14 +30,27 @@ Sync Claude Code configuration (settings, CLAUDE.md, commands, hooks, MCP server
 
 ## Setup
 
-### 1. Run bootstrap on primary Mac
+### 1. Install Syncthing on ALL Macs first
+
+Before running `bootstrap.sh` on any machine, install and start Syncthing on every Mac that will participate in sync:
+
+```bash
+brew install syncthing
+brew services start syncthing
+```
+
+Verify it's running by opening http://localhost:8384 — this is Syncthing's local web UI. Each Mac runs its own instance.
+
+### 2. Run bootstrap on primary Mac (Mac A)
 
 ```bash
 chmod +x bootstrap.sh
 ./bootstrap.sh
 ```
 
-### 2. Configure Syncthing pairing
+This migrates your existing `~/.claude` config into `~/Sync/claude-code-config` and creates symlinks back.
+
+### 3. Pair the Macs via Syncthing
 
 1. Open http://localhost:8384 on both Macs
 2. On Mac A: Actions → Show ID → copy the Device ID
@@ -45,6 +58,7 @@ chmod +x bootstrap.sh
 4. Repeat in reverse (Mac B ID → Mac A)
 5. On Mac A: Add Folder → path `~/Sync/claude-code-config` → share with Mac B
 6. On Mac B: Accept the incoming folder share
+7. Wait for the folder to finish syncing (Syncthing UI shows "Up to Date")
 
 **Tailscale optimization**: Set the remote device address to its Tailscale IP:
 ```
@@ -52,14 +66,16 @@ tcp://100.x.y.z:22000
 ```
 This bypasses relay servers and gives you LAN-speed sync.
 
-### 3. Run bootstrap on secondary Mac(s)
+### 4. Run bootstrap on secondary Mac(s)
+
+Once `~/Sync/claude-code-config` has finished syncing from Mac A:
 
 ```bash
 chmod +x bootstrap.sh
 ./bootstrap.sh
 ```
 
-The script detects that `~/Sync/claude-code-config` already has files (from Syncthing) and links to them instead of migrating.
+The script detects that `~/Sync/claude-code-config` already has files (from Syncthing) and creates symlinks to them instead of migrating.
 
 ## MCP Server Setup (Per Machine)
 
@@ -110,23 +126,19 @@ Note: session history itself is not useful to sync — you cannot resume a sessi
 ## Adding a new Mac
 
 ```bash
-# 1. Install prerequisites
-brew install syncthing stow
-# Note: stow is a symlink farm manager that automates creating symlinks
-# from a source directory into a target. The bootstrap.sh script handles
-# the actual symlinking, so stow is only needed if bootstrap.sh uses it
-# internally. Plain `ln -s` commands would achieve the same result.
-
-# 2. Start Syncthing, pair with existing devices
+# 1. Install and start Syncthing
+brew install syncthing
 brew services start syncthing
-# → pair via http://localhost:8384
 
-# 3. Wait for ~/Sync/claude-code-config to populate
+# 2. Open http://localhost:8384 and pair with existing devices
+#    - Exchange Device IDs with an existing Mac
+#    - Accept the claude-code-config folder share
+#    - Wait for sync to complete (UI shows "Up to Date")
 
-# 4. Run bootstrap
+# 3. Run bootstrap (creates symlinks to the synced config)
 ./bootstrap.sh
 
-# 5. (Optional) Set up MCP servers if not syncing .claude.json
+# 4. (Optional) Set up MCP servers
 ./install-mcp.sh
 ```
 
